@@ -1,0 +1,55 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * User: Andreas Warnaar
+ * Date: 27-03-2018
+ * Time: 20:48
+ */
+
+include __DIR__ . '/../vendor/autoload.php';
+
+$loop = React\EventLoop\Factory::create();
+
+
+$single_server = [
+    'host'               => 'redis',
+    'port'               => 6379,
+    'database'           => 1,
+    'read_write_timeout' => 0
+];
+$client = new Predis\Client($single_server);
+$clientPublisher = new Predis\Client($single_server);
+
+$factory = new \Clue\React\Redis\Factory($loop);
+
+$kernel = new App\Kernel('dev',true);
+
+$handler = new \App\Server\HttpSocketRequestHandler($kernel);
+
+$connectionPool = new \App\Server\ConnectionPool($clientPublisher);
+
+$ws = new \Voryx\WebSocketMiddleware\WebSocketMiddleware(['/ws'],
+    new \App\Server\WebSocketConnectionHandler($connectionPool, $loop)
+);
+$webroot = '/var/www/html/public/';
+
+
+$server = new \React\Http\Server(
+    [
+        new \WyriHaximus\React\Http\Middleware\WebrootPreloadMiddleware($webroot),
+        $ws,
+        $handler,
+    ]
+);
+
+$factoryRedis = new \Clue\React\Redis\Factory($loop);
+$factoryRedis->createClient('redis')->then([$connectionPool,'handlePubSub']);
+echo ' ======== start on port'.$_SERVER['PORT'] . '==============================';
+$socket = new React\Socket\Server('0.0.0.0:' . $_SERVER['PORT'], $loop);
+$server->on('error', function (Exception $e) {
+    echo 'Error: ' . $e->__toString() . PHP_EOL;
+});
+$server->listen($socket);
+
+$loop->run();

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test WebSocket</title>
+</head>
+<body>
+<input id="input">
+<div id="messages">
+    <h1>Kip</h1>
+    <script>
+        var ws = new WebSocket('ws://localhost/ws');
+
+        ws.onopen = x => console.log('opened', x);
+
+        var messages = document.getElementById('messages');
+        ws.onmessage = m => {
+            var newMsg = document.createElement('div');
+            newMsg.innerHTML = m.data;
+            messages.appendChild(newMsg);
+            console.log('message', m);
+        };
+
+        var input = document.getElementById('input');
+        input.onkeydown = e => {
+            if (e.keyCode == 13) {
+                var msg = {};
+
+                if(input.value == 'global') {
+                    msg.type = 'subscribe';
+                    msg.channel = 'global';
+                } else {
+                    msg.type = 'message';
+                    msg.channel = 'global';
+                    msg.message = input.value;
+                }
+                ws.send(JSON.stringify(msg));
+                input.value = '';
+            }
+        };
+    </script>
+</div>
+
+
+
+</body>
+</html>

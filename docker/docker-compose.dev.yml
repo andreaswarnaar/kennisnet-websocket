@@ -1,0 +1,47 @@
+version: '2'
+services:
+  web:
+    environment:
+        SYMFONY_DEPRECATIONS_HELPER: "disabled"
+    volumes:
+        - ../:/var/www/html
+        - "./app/.bashrc:/home/host/.bashrc"
+        - "./app/.bash_history:/home/host/.bash_history"
+    extends:
+        service: web
+        file: docker-compose.base.yml
+    ports:
+        - "${APP_PORT}:80"
+        - "5500-5503:5500-5503"
+        - "9001:9001"
+        - "8001:8001"
+    depends_on:
+        - "mysql"
+  mysql:
+    extends:
+      service: mysql
+      file: docker-compose.base.yml
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASS}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASS}"
+  node:
+    extends:
+      service: node
+      file: docker-compose.base.yml
+    volumes:
+      - ../:/home/node/app
+      - "./node/.bashrc:/home/node/.bashrc"
+      - "./node/.bash_history:/home/node/.bash_history"
+  redis:
+    ports:
+      - "6379:6379"
+    extends:
+      service: redis
+      file: docker-compose.base.yml
+volumes:
+  mysqldata:
+    driver: "local"

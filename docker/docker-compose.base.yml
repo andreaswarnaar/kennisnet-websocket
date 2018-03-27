@@ -1,0 +1,31 @@
+version: '2'
+services:
+  web:
+    image: "${APP_IMAGE_NAME}"
+    container_name: "${PROJECT_NAME}_web"
+    environment:
+      NAME: "${PROJECT_NAME}_web"
+      DATABASE_URL: "${DATABASE_URL}"
+    volumes:
+     - ../:/var/www/html
+  mysql:
+    container_name: "${PROJECT_NAME}_db"
+    image: mysql:5.7
+    volumes:
+     - ./mysql/.data:/var/lib/mysql
+  node:
+      build:
+        context: ./node
+        dockerfile: Dockerfile
+      container_name: "${PROJECT_NAME}_node"
+      user: "node"
+      working_dir: /home/node/app
+      environment:
+        NODE_ENV: "production"
+        NAME: "${PROJECT_NAME}_node"
+      command: "sh ../entrypoint.sh"
+  redis:
+      image: redis
+      container_name: "${PROJECT_NAME}_redis"
+      volumes:
+        - ./redis/.data:/data

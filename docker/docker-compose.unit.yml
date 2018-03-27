@@ -1,0 +1,9 @@
+version: '2'
+services:
+  web:
+    environment:
+      SYMFONY_DEPRECATIONS_HELPER: "disabled"
+      TEST_ENV: "UNIT"
+    extends:
+      service: web
+      file: docker-compose.base.yml
